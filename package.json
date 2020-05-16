@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@types/color": "^3.0.1",
     "@types/lodash": "^4.14.151",
     "color": "^3.1.2",
     "core-js": "^3.6.4",

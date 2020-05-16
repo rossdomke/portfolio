@@ -4,8 +4,12 @@
     <div id="sun-color" ref="sunColor" class="color"></div>
     <div id="cloud-color" ref="cloudColor" class="color"></div>
     <canvas ref="canvas"></canvas>
-    <button @click="draw()">Generate</button>
-    <input type="number" v-model="canvasData.maxLines" />
+    <button @click="generateMountains()">Generate</button>
+    <input
+      type="number"
+      v-model="canvasData.maxLines"
+      @keydown.enter="generateMountains()"
+    />
     {{ canvasData }}
   </div>
 </template>
@@ -73,13 +77,17 @@ export default class List extends Vue {
   };
 
   mounted() {
-    this.$refs.nav.addEventListener("resize", this.resize);
+    console.log(this.$refs.nav);
+    window.addEventListener("resize", this.resize);
     this.$nextTick(() => {
+      this.updateColors();
       this.resize();
     });
+    window.requestAnimationFrame(this.draw);
   }
 
   resize() {
+    console.log("resizeing");
     this.canvasData.width = this.$refs.nav.clientWidth;
   }
 
@@ -139,7 +147,6 @@ export default class List extends Vue {
   }
 
   draw() {
-    this.updateColors();
     this.$refs.canvas.width = this.canvasData.width;
     this.$refs.canvas.height = this.canvasData.height;
 
@@ -148,7 +155,6 @@ export default class List extends Vue {
       console.error("Null Context");
       return;
     }
-    this.generateMountains();
     const { width, height } = this.canvasData;
 
     // Draw Circle
@@ -197,11 +203,12 @@ export default class List extends Vue {
       ctx.fill();
       // ctx.stroke();
     });
+    window.requestAnimationFrame(this.draw);
   }
 
   @Watch("canvasData.width", { deep: true })
   cavasDataWatcher() {
-    this.draw();
+    this.generateMountains();
   }
 }
 </script>
