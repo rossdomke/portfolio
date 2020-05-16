@@ -13,11 +13,11 @@ export class Ratio {
 }
 
 export interface Photo {
-  name: string,
-  url: string,
-  thumbnail: string,
-  tags: Array<string>,
-  ratio: Ratio,
+  name: string;
+  url: string;
+  thumbnail: string;
+  tags: Array<string>;
+  ratio: Ratio;
 }
 
 export enum PostType {
@@ -27,11 +27,11 @@ export enum PostType {
 }
 
 export interface Post {
-  title: string,
-  slug?: string,
-  body?: string,
-  photos?: Array<Photo>,
-  tags?: Array<string>,
-  postDate?: Date,
-  type?: PostType,
+  title: string;
+  slug?: string;
+  body: string;
+  photos?: Array<Photo>;
+  tags?: Array<string>;
+  postDate?: Date;
+  type?: PostType;
 }

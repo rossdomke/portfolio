@@ -1,4 +1,5 @@
-@import "./dark-colors.scss";
+@import "../../node_modules/reset-css/sass/reset";
+@import "./colors";
 
 body {
   background-color: $background;
