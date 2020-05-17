@@ -35,12 +35,17 @@ interface MountainRange {
   points: Array<Point>;
   color: string;
 }
-
+interface Sun {
+  position: Point;
+  color: string;
+  radius: number;
+}
 interface CanvasData {
   width: number;
   height: number;
   colors: CanvasColors;
   mountains: Array<MountainRange>;
+  sun: Sun;
   maxLines: number;
   minRangeShift: number;
   maxRangeShift: number;
@@ -55,10 +60,11 @@ interface CanvasData {
 export default class List extends Vue {
   canvasData: CanvasData = {
     width: 400,
-    height: 400,
+    height: 300,
     colors: { mountain: "#F00", cloud: "#0F0", sun: "#00F" },
     mountains: [],
-    maxLines: 3,
+    sun: { position: { x: 0, y: 0 }, color: "#000:", radius: 150 },
+    maxLines: 5,
     minRangeShift: 30,
     maxRangeShift: 40,
     minPeakShiftY: 10,
@@ -104,6 +110,16 @@ export default class List extends Vue {
       ).backgroundColor;
     });
   }
+  generateSun() {
+    this.canvasData.sun = {
+      position: {
+        x: this.canvasData.width / 2,
+        y: this.canvasData.startRangeAt + 30
+      },
+      radius: this.canvasData.startRangeAt,
+      color: this.canvasData.colors.sun
+    };
+  }
 
   generateMountains(): void {
     console.log("Generating Mountains");
@@ -147,6 +163,10 @@ export default class List extends Vue {
   }
 
   draw() {
+    if (!this.$refs.canvas) {
+      window.requestAnimationFrame(this.draw);
+      return;
+    }
     this.$refs.canvas.width = this.canvasData.width;
     this.$refs.canvas.height = this.canvasData.height;
 
@@ -155,31 +175,25 @@ export default class List extends Vue {
       console.error("Null Context");
       return;
     }
-    const { width, height } = this.canvasData;
+    const { width, height, sun, mountains } = this.canvasData;
+    ctx.clearRect(0, 0, width, height);
 
     // Draw Circle
     ctx.beginPath();
-    const circleOffset = randBetween(-30, 30);
-    ctx.arc(
-      width / 2 + circleOffset,
-      this.canvasData.startRangeAt,
-      height / 6 + randBetween(0, 15),
-      0,
-      2 * Math.PI
-    );
+    ctx.arc(sun.position.x, sun.position.y, sun.radius, 0, 2 * Math.PI);
     const circleGrd = ctx.createLinearGradient(
       width / 2,
-      this.canvasData.startRangeAt - height / 5,
-      width / 2,
-      this.canvasData.startRangeAt + height / 8
+      sun.position.y - sun.radius,
+      width / 2 + 40,
+      sun.position.y + sun.radius
     );
     circleGrd.addColorStop(0, "white");
-    circleGrd.addColorStop(0.4, this.canvasData.colors.sun);
+    circleGrd.addColorStop(0.2, this.canvasData.colors.sun);
     circleGrd.addColorStop(1, this.canvasData.colors.sun);
     ctx.fillStyle = circleGrd;
     ctx.fill();
     // Draw Mountains
-    this.canvasData.mountains.forEach(mountain => {
+    mountains.forEach(mountain => {
       ctx.beginPath();
       ctx.moveTo(0, height);
       mountain.points.forEach(pt => {
@@ -191,13 +205,13 @@ export default class List extends Vue {
         width / 2,
         mountain.midLinePosition,
         width / 2,
-        height
+        height + 300
       );
       // grd.addColorStop(0, mountain.color);
       const clr = new Color(mountain.color).lighten(0.1);
 
       grd.addColorStop(0, mountain.color);
-      grd.addColorStop(0.3, clr.hex());
+      grd.addColorStop(0.5, clr.hex());
       grd.addColorStop(1, "transparent");
       ctx.fillStyle = grd;
       ctx.fill();
@@ -206,9 +220,14 @@ export default class List extends Vue {
     window.requestAnimationFrame(this.draw);
   }
 
+  generateCanvasData() {
+    this.generateSun();
+    this.generateMountains();
+  }
+
   @Watch("canvasData.width", { deep: true })
   cavasDataWatcher() {
-    this.generateMountains();
+    this.generateCanvasData();
   }
 }
 </script>
@@ -235,7 +254,7 @@ export default class List extends Vue {
   }
   > canvas {
     width: 100%;
-    height: 400px;
+    height: 300px;
     // border: solid red 1px;
   }
 }
