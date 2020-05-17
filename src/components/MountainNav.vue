@@ -188,8 +188,8 @@ export default class List extends Vue {
       sun.position.y + sun.radius
     );
     circleGrd.addColorStop(0, "white");
-    circleGrd.addColorStop(0.2, this.canvasData.colors.sun);
-    circleGrd.addColorStop(1, this.canvasData.colors.sun);
+    circleGrd.addColorStop(0.2, sun.color);
+    circleGrd.addColorStop(1, sun.color);
     ctx.fillStyle = circleGrd;
     ctx.fill();
     // Draw Mountains
