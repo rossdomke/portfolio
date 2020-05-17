@@ -40,12 +40,22 @@ interface Sun {
   color: string;
   radius: number;
 }
+interface Cloud {
+  position: Point;
+  color: string;
+  opacity: number;
+  speed: number;
+  width: number;
+  height: number;
+}
 interface CanvasData {
   width: number;
   height: number;
   colors: CanvasColors;
   mountains: Array<MountainRange>;
+  clouds: Array<Cloud>;
   sun: Sun;
+  cloudLimit: number;
   maxLines: number;
   minRangeShift: number;
   maxRangeShift: number;
@@ -58,20 +68,23 @@ interface CanvasData {
 
 @Component
 export default class List extends Vue {
+  animationFrame = 0;
   canvasData: CanvasData = {
     width: 400,
     height: 300,
     colors: { mountain: "#F00", cloud: "#0F0", sun: "#00F" },
     mountains: [],
+    clouds: [],
     sun: { position: { x: 0, y: 0 }, color: "#000:", radius: 150 },
     maxLines: 5,
+    cloudLimit: 14,
     minRangeShift: 30,
     maxRangeShift: 40,
     minPeakShiftY: 10,
     maxPeakShiftY: 20,
     minPeakShiftX: 10,
     maxPeakShiftX: 70,
-    startRangeAt: 100
+    startRangeAt: 150
   };
 
   $refs!: {
@@ -120,7 +133,23 @@ export default class List extends Vue {
       color: this.canvasData.colors.sun
     };
   }
-
+  generateClouds() {
+    this.canvasData.clouds = [];
+    for (let i = 0; i < this.canvasData.cloudLimit; i += 1) {
+      const cloud: Cloud = {
+        position: {
+          x: randBetween(0, this.canvasData.width),
+          y: randBetween(35, this.canvasData.startRangeAt)
+        },
+        color: this.canvasData.colors.cloud,
+        opacity: 0.5,
+        width: randBetween(50, 100),
+        height: randBetween(10, 15),
+        speed: randBetween(3, 7)
+      };
+      this.canvasData.clouds.push(cloud);
+    }
+  }
   generateMountains(): void {
     console.log("Generating Mountains");
     this.canvasData.mountains = [];
@@ -175,10 +204,10 @@ export default class List extends Vue {
       console.error("Null Context");
       return;
     }
-    const { width, height, sun, mountains } = this.canvasData;
+    const { width, height, sun, mountains, clouds } = this.canvasData;
     ctx.clearRect(0, 0, width, height);
 
-    // Draw Circle
+    // Draw sun
     ctx.beginPath();
     ctx.arc(sun.position.x, sun.position.y, sun.radius, 0, 2 * Math.PI);
     const circleGrd = ctx.createLinearGradient(
@@ -192,6 +221,8 @@ export default class List extends Vue {
     circleGrd.addColorStop(1, sun.color);
     ctx.fillStyle = circleGrd;
     ctx.fill();
+    // erase part of sunn that will be hidden by mountains
+    ctx.clearRect(0, this.canvasData.startRangeAt + 100, width, height);
     // Draw Mountains
     mountains.forEach(mountain => {
       ctx.beginPath();
@@ -205,24 +236,80 @@ export default class List extends Vue {
         width / 2,
         mountain.midLinePosition,
         width / 2,
-        height + 300
+        height
       );
-      // grd.addColorStop(0, mountain.color);
       const clr = new Color(mountain.color).lighten(0.1);
-
       grd.addColorStop(0, mountain.color);
-      grd.addColorStop(0.5, clr.hex());
+      grd.addColorStop(0.8, clr.hex());
       grd.addColorStop(1, "transparent");
       ctx.fillStyle = grd;
       ctx.fill();
-      // ctx.stroke();
     });
+    // Draw Clouds
+    clouds.forEach(cloud => {
+      const pos: Point = {
+        x: cloud.position.x - cloud.width / 2,
+        y: cloud.position.y - cloud.height / 2
+      };
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      // Top of cloud
+      pos.x = pos.x + cloud.width;
+      ctx.lineTo(pos.x, pos.y);
+
+      //right circle
+      ctx.arc(
+        pos.x,
+        pos.y - cloud.height / 2,
+        cloud.height / 2,
+        1.5 * Math.PI,
+        0.5 * Math.PI
+      );
+      //right line of cloud
+      pos.y = pos.y - cloud.height;
+      ctx.lineTo(pos.x, pos.y);
+
+      //bottom of cloud
+      pos.x = pos.x - cloud.width;
+      ctx.lineTo(pos.x, pos.y);
+
+      //left half circle
+      ctx.arc(
+        pos.x,
+        pos.y + cloud.height / 2,
+        cloud.height / 2,
+        0.5 * Math.PI,
+        1.5 * Math.PI
+      );
+      ctx.closePath();
+      ctx.globalAlpha = cloud.opacity;
+      ctx.fillStyle = cloud.color;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+    this.animationFrame += 1;
+    this.animateCanvasData();
     window.requestAnimationFrame(this.draw);
   }
-
+  animateClouds() {
+    this.canvasData.clouds.forEach(cloud => {
+      if (this.animationFrame % cloud.speed !== 0) return;
+      cloud.position.x += 1;
+      if (
+        cloud.position.x - cloud.width / 2 - cloud.height / 2 >
+        this.canvasData.width
+      ) {
+        cloud.position.x = -1 * (cloud.width / 2 + cloud.height / 2);
+      }
+    });
+  }
+  animateCanvasData() {
+    this.animateClouds();
+  }
   generateCanvasData() {
     this.generateSun();
     this.generateMountains();
+    this.generateClouds();
   }
 
   @Watch("canvasData.width", { deep: true })
