@@ -78,13 +78,13 @@ export default class List extends Vue {
     sun: { position: { x: 0, y: 0 }, color: "#000:", radius: 150 },
     maxLines: 5,
     cloudLimit: 14,
-    minRangeShift: 30,
-    maxRangeShift: 40,
+    minRangeShift: 20,
+    maxRangeShift: 30,
     minPeakShiftY: 10,
-    maxPeakShiftY: 20,
+    maxPeakShiftY: 30,
     minPeakShiftX: 10,
     maxPeakShiftX: 70,
-    startRangeAt: 150
+    startRangeAt: 120
   };
 
   $refs!: {
@@ -96,7 +96,6 @@ export default class List extends Vue {
   };
 
   mounted() {
-    console.log(this.$refs.nav);
     window.addEventListener("resize", this.resize);
     this.$nextTick(() => {
       this.updateColors();
@@ -106,8 +105,7 @@ export default class List extends Vue {
   }
 
   resize() {
-    console.log("resizeing");
-    this.canvasData.width = this.$refs.nav.clientWidth;
+    if (this.$refs.nav) this.canvasData.width = this.$refs.nav.clientWidth;
   }
 
   updateColors() {
@@ -151,7 +149,6 @@ export default class List extends Vue {
     }
   }
   generateMountains(): void {
-    console.log("Generating Mountains");
     this.canvasData.mountains = [];
     const color = Color(this.canvasData.colors.mountain);
     for (let rangeNum = 0; rangeNum < this.canvasData.maxLines; rangeNum += 1) {
@@ -164,7 +161,7 @@ export default class List extends Vue {
           ) *
             rangeNum,
         points: [],
-        color: color.darken(0.05 * rangeNum)
+        color: color.darken(0.1 * rangeNum).hex()
       };
       let point: Point = { x: 0, y: range.midLinePosition };
       range.points.push(point);
@@ -188,7 +185,6 @@ export default class List extends Vue {
       }
       this.canvasData.mountains.push(range);
     }
-    console.log("Done Generating Mountains");
   }
 
   draw() {
